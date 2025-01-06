@@ -1,20 +1,10 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
 from faster_whisper import WhisperModel
 from fastapi.responses import FileResponse
 import os
 import shutil
 
 app = FastAPI()
-
-# Configura il middleware CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Puoi restringere a ["https://m-moschetta.github.io"]
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 # Inizializza il modello Whisper
 model = WhisperModel("base", device="cpu")  # Puoi cambiare il modello, ad esempio "medium" o "large-v2"
@@ -28,6 +18,10 @@ def read_root():
 async def upload_audio(file: UploadFile = File(...)):
     """Carica un file audio e restituisci la trascrizione."""
     try:
+        # Verifica che il file sia un audio
+        if not file.content_type.startswith("audio/"):
+            raise HTTPException(status_code=400, detail="Il file caricato non è un audio valido.")
+
         # Salva temporaneamente il file
         temp_file_path = f"/app/{file.filename}"
         with open(temp_file_path, "wb") as buffer:
@@ -44,6 +38,8 @@ async def upload_audio(file: UploadFile = File(...)):
             "language": info.language,
             "transcription": transcription
         }
+    except HTTPException as e:
+        raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Errore durante la trascrizione: {str(e)}")
 
