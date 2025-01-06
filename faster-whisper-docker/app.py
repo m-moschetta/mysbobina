@@ -10,7 +10,7 @@ app = FastAPI()
 # Configura il middleware CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Puoi restringere a ["https://tuo-frontend.netlify.app"]
+    allow_origins=["*"],  # Puoi restringere a ["https://m-moschetta.github.io"]
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
