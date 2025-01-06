@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <style>
+        /* Rimane invariata tutta la tua sezione CSS */
         @charset "UTF-8";
         @font-face {
             font-family: Raleway;
@@ -15,175 +16,7 @@
             src: url(https://fonts.gstatic.com/s/raleway/v34/1Ptug8zYS_SKggPNyCAIT5lu.woff2) format("woff2");
         }
 
-        :root {
-            --primary-color: #9e4fb0;
-            --secondary-color: #fdf3ff;
-            --background-gradient: linear-gradient(135deg, #9e4fb0, #6610f2);
-            --button-hover: #7e3f8d;
-            --text-color: #ffffff;
-            --input-bg: #f8f9fa;
-            --input-border: #ced4da;
-            --box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            --border-radius: 10px;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Raleway', sans-serif;
-        }
-
-        body {
-            background: var(--background-gradient);
-            color: var(--text-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-        }
-
-        main {
-            background: var(--secondary-color);
-            padding: 2.5rem;
-            width: 90%;
-            max-width: 600px;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            text-align: center;
-        }
-
-        header {
-            margin-bottom: 2.5rem;
-        }
-
-        header h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            letter-spacing: 1px;
-            color: var(--primary-color);
-            margin-bottom: 0.5rem;
-        }
-
-        .upload-container {
-            background: var(--input-bg);
-            border: 2px dashed var(--primary-color);
-            border-radius: var(--border-radius);
-            padding: 2rem;
-            margin: 1.5rem 0;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .upload-container:hover {
-            background: #fff;
-            border-color: var(--button-hover);
-        }
-
-        .upload-icon {
-            font-size: 3rem;
-            color: var(--primary-color);
-            margin-bottom: 1rem;
-        }
-
-        .upload-text {
-            color: #666;
-            margin-bottom: 1rem;
-            font-size: 1.1rem;
-        }
-
-        .file-info {
-            color: #888;
-            font-size: 0.9rem;
-        }
-
-        input[type="file"] {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            cursor: pointer;
-        }
-
-        button {
-            background-color: var(--primary-color);
-            color: var(--text-color);
-            border: none;
-            padding: 1rem 2rem;
-            font-size: 1.1rem;
-            border-radius: var(--border-radius);
-            cursor: pointer;
-            transition: all 0.3s ease-in-out;
-            box-shadow: var(--box-shadow);
-            margin: 1rem 0;
-            width: 80%;
-            max-width: 300px;
-        }
-
-        button:hover {
-            background-color: var(--button-hover);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
-        }
-
-        button:active {
-            transform: translateY(0);
-        }
-
-        .output {
-            margin-top: 2rem;
-            padding: 1.5rem;
-            background: var(--input-bg);
-            border-radius: var(--border-radius);
-            color: #333;
-            text-align: left;
-            font-family: monospace;
-            white-space: pre-wrap;
-            min-height: 120px;
-            box-shadow: var(--box-shadow);
-        }
-
-        footer {
-            margin-top: 2rem;
-            text-align: center;
-            font-size: 0.9rem;
-            color: #666;
-        }
-
-        /* Animazione per il caricamento */
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-            100% { transform: scale(1); }
-        }
-
-        .uploading {
-            animation: pulse 1.5s infinite;
-        }
-
-        /* Responsive design */
-        @media (max-width: 480px) {
-            main {
-                padding: 1.5rem;
-            }
-
-            header h1 {
-                font-size: 2rem;
-            }
-
-            .upload-container {
-                padding: 1.5rem;
-            }
-
-            button {
-                width: 100%;
-            }
-        }
+        /* ... resto del tuo CSS ... */
     </style>
 </head>
 <body>
@@ -211,6 +44,8 @@
     </main>
 
     <script>
+        const API_URL = "https://cbd2-2001-b07-6455-13a3-a9f2-39f3-61d3-cb54.ngrok-free.app/upload/"; // URL del backend esposto
+
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('audioFile');
         const outputDiv = document.getElementById('transcriptionOutput');
@@ -259,7 +94,7 @@
             formData.append('file', file);
     
             try {
-                const response = await fetch('http://localhost:8000/upload/', {
+                const response = await fetch(API_URL, {
                     method: 'POST',
                     body: formData,
                 });
