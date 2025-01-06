@@ -1,10 +1,20 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from faster_whisper import WhisperModel
 from fastapi.responses import FileResponse
 import os
 import shutil
 
 app = FastAPI()
+
+# Configura il middleware CORS per permettere richieste da qualsiasi origine
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Permetti richieste da tutte le origini
+    allow_credentials=True,
+    allow_methods=["*"],  # Consenti tutti i metodi HTTP (GET, POST, ecc.)
+    allow_headers=["*"],  # Consenti tutti gli header
+)
 
 # Inizializza il modello Whisper
 model = WhisperModel("base", device="cpu")  # Puoi cambiare il modello, ad esempio "medium" o "large-v2"
