@@ -14,6 +14,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["ngrok-skip-browser-warning"]
 )
 
 # Percorsi per whisper.cpp
@@ -43,7 +44,9 @@ async def upload_audio(file: UploadFile = File(...)):
         with open(temp_file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        # Comando per eseguire whisper.cpp con supporto Neural Engine
+        print(f"File salvato temporaneamente in: {temp_file_path}")
+
+        # Comando per eseguire whisper.cpp con Core ML (ANE)
         command = [
             WHISPER_BIN,
             "-m", MODEL_PATH,
@@ -76,6 +79,7 @@ async def upload_audio(file: UploadFile = File(...)):
     except HTTPException as e:
         raise e
     except Exception as e:
+        print(f"Errore durante la trascrizione: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Errore durante la trascrizione: {str(e)}")
 
 @app.get("/favicon.ico", include_in_schema=False)
