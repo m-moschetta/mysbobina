@@ -1,23 +1,25 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from faster_whisper import WhisperModel
 from fastapi.responses import FileResponse
 import os
+import subprocess
 import shutil
 
 app = FastAPI()
 
-# Configura il middleware CORS per permettere richieste da qualsiasi origine
+# Configura il middleware CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Permetti richieste da tutte le origini
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],  # Consenti tutti i metodi HTTP (GET, POST, ecc.)
-    allow_headers=["*"],  # Consenti tutti gli header
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-# Inizializza il modello Whisper
-model = WhisperModel("base", device="cpu")  # Puoi cambiare il modello, ad esempio "medium" o "large-v2"
+# Percorsi per whisper.cpp
+WHISPER_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "whisper.cpp")
+MODEL_PATH = os.path.join(WHISPER_DIR, "models", "ggml-base.bin")
+WHISPER_BIN = os.path.join(WHISPER_DIR, "main")
 
 @app.get("/")
 def read_root():
@@ -32,20 +34,43 @@ async def upload_audio(file: UploadFile = File(...)):
         if not file.content_type.startswith("audio/"):
             raise HTTPException(status_code=400, detail="Il file caricato non è un audio valido.")
 
+        # Crea una directory temporanea se non esiste
+        temp_dir = "temp"
+        os.makedirs(temp_dir, exist_ok=True)
+        
         # Salva temporaneamente il file
-        temp_file_path = f"/app/{file.filename}"
+        temp_file_path = os.path.join(temp_dir, file.filename)
         with open(temp_file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        # Avvia la trascrizione
-        segments, info = model.transcribe(temp_file_path)
-        transcription = "\n".join([segment.text for segment in segments])
+        # Comando per eseguire whisper.cpp con supporto Neural Engine
+        command = [
+            WHISPER_BIN,
+            "-m", MODEL_PATH,
+            "-f", temp_file_path,
+            "--coreml",
+            "-otxt"
+        ]
 
-        # Elimina il file temporaneo
+        # Esegui la trascrizione
+        result = subprocess.run(command, 
+                              capture_output=True, 
+                              text=True,
+                              cwd=WHISPER_DIR)
+
+        if result.returncode != 0:
+            raise Exception(f"Errore whisper.cpp: {result.stderr}")
+
+        # Leggi il risultato della trascrizione
+        output_file = f"{temp_file_path}.txt"
+        with open(output_file, "r") as f:
+            transcription = f.read()
+
+        # Pulizia file temporanei
         os.remove(temp_file_path)
+        os.remove(output_file)
 
         return {
-            "language": info.language,
             "transcription": transcription
         }
     except HTTPException as e:
