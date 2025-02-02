@@ -1,68 +1,105 @@
-<script>
-    const API_BASE_URL = "https://73a5-93-66-99-217.ngrok-free.app";
-    
-    const dropZone = document.getElementById('dropZone');
-    const fileInput = document.getElementById('audioFile');
-    const outputDiv = document.getElementById('transcriptionOutput');
-    
-    dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropZone.classList.add('uploading');
-    });
-    
-    dropZone.addEventListener('dragleave', () => {
-        dropZone.classList.remove('uploading');
-    });
-    
-    dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropZone.classList.remove('uploading');
-        const files = e.dataTransfer.files;
-        if (files.length) {
-            fileInput.files = files;
-            updateFileName(files[0].name);
-        }
-    });
-    
-    fileInput.addEventListener('change', (e) => {
-        if (e.target.files.length) {
-            updateFileName(e.target.files[0].name);
-        }
-    });
-    
-    function updateFileName(fileName) {
-        document.querySelector('.upload-text').textContent = `File selezionato: ${fileName}`;
-    }
-    
-    async function transcribeAudio() {
-        if (!fileInput.files.length) {
-            outputDiv.textContent = "Per favore, seleziona un file audio.";
-            return;
-        }
-        
-        const file = fileInput.files[0];
-        outputDiv.textContent = "Trascrizione in corso...";
-        dropZone.classList.add('uploading');
-        
-        try {
-            const formData = new FormData();
-            formData.append('file', file);
-    
-            const response = await fetch(`${API_BASE_URL}/upload/`, {
-                method: 'POST',
-                body: formData,
-            });
-    
-            if (!response.ok) {
-                throw new Error('Errore durante la trascrizione.');
-            }
-    
-            const data = await response.json();
-            outputDiv.textContent = data.transcription;
-        } catch (error) {
-            outputDiv.textContent = `Errore: ${error.message}`;
-        } finally {
+<!DOCTYPE html>
+<html lang="it" data-critters-container>
+<head>
+    <meta charset="utf-8">
+    <title>MySbobina - Trascrizione Audio</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <style>
+        /* Stile CSS invariato */
+    </style>
+</head>
+<body>
+    <main>
+        <header>
+            <h1>Trascrivi il tuo Audio</h1>
+        </header>
+
+        <div class="upload-container" id="dropZone">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">Trascina qui il tuo file audio<br>oppure clicca per selezionarlo</div>
+            <div class="file-info">Formati supportati: MP3, WAV, M4A, AAC</div>
+            <input type="file" id="audioFile" accept="audio/*">
+        </div>
+
+        <button onclick="transcribeAudio()">Trascrivi Audio</button>
+
+        <div class="output" id="transcriptionOutput">
+            Qui apparirà la trascrizione del tuo audio...
+        </div>
+
+        <footer>
+            <p>Powered by MySbobina</p>
+        </footer>
+    </main>
+
+    <script>
+        const API_BASE_URL = "https://73a5-93-66-99-217.ngrok-free.app"; // URL del tuo server
+
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('audioFile');
+        const outputDiv = document.getElementById('transcriptionOutput');
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('uploading');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
             dropZone.classList.remove('uploading');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('uploading');
+            const files = e.dataTransfer.files;
+            if (files.length) {
+                fileInput.files = files;
+                updateFileName(files[0].name);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                updateFileName(e.target.files[0].name);
+            }
+        });
+
+        function updateFileName(fileName) {
+            document.querySelector('.upload-text').textContent = `File selezionato: ${fileName}`;
         }
-    }
+
+        async function transcribeAudio() {
+            if (!fileInput.files.length) {
+                outputDiv.textContent = "Per favore, seleziona un file audio.";
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            outputDiv.textContent = "Trascrizione in corso...";
+            dropZone.classList.add('uploading');
+            
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const response = await fetch(`${API_BASE_URL}/upload/`, {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    throw new Error('Errore durante la trascrizione.');
+                }
+
+                const data = await response.json();
+                outputDiv.textContent = data.transcription;
+            } catch (error) {
+                outputDiv.textContent = `Errore: ${error.message}`;
+            } finally {
+                dropZone.classList.remove('uploading');
+            }
+        }
     </script>
+</body>
+</html>
