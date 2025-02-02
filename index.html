@@ -155,7 +155,6 @@
             color: #666;
         }
 
-        /* Animazione per il caricamento */
         @keyframes pulse {
             0% { transform: scale(1); }
             50% { transform: scale(1.02); }
@@ -166,7 +165,6 @@
             animation: pulse 1.5s infinite;
         }
 
-        /* Responsive design */
         @media (max-width: 480px) {
             main {
                 padding: 1.5rem;
@@ -211,14 +209,55 @@
     </main>
 
     <script>
-   const API_URL = "https://b097-93-66-99-217.ngrok-free.app/upload/";
-
-
+const API_BASE_URL = "https://73a5-93-66-99-217.ngrok-free.app";
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('audioFile');
         const outputDiv = document.getElementById('transcriptionOutput');
+
+        // Funzione per convertire AudioBuffer in WAV
+        function audioBufferToWav(buffer) {
+            const numChannels = 1;
+            const sampleRate = buffer.sampleRate;
+            const format = 1; // PCM
+            const bitDepth = 16;
+            
+            const dataLength = buffer.length * numChannels * (bitDepth / 8);
+            const bufferWav = new ArrayBuffer(44 + dataLength);
+            const view = new DataView(bufferWav);
+            
+            // Scrivi header WAV
+            writeString(view, 0, 'RIFF');
+            view.setUint32(4, 36 + dataLength, true);
+            writeString(view, 8, 'WAVE');
+            writeString(view, 12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, format, true);
+            view.setUint16(22, numChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * numChannels * (bitDepth / 8), true);
+            view.setUint16(32, numChannels * (bitDepth / 8), true);
+            view.setUint16(34, bitDepth, true);
+            writeString(view, 36, 'data');
+            view.setUint32(40, dataLength, true);
+            
+            // Scrivi i dati audio
+            const samples = buffer.getChannelData(0);
+            let offset = 44;
+            for (let i = 0; i < samples.length; i++) {
+                const sample = Math.max(-1, Math.min(1, samples[i]));
+                view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+                offset += 2;
+            }
+            
+            return bufferWav;
+        }
+
+        function writeString(view, offset, string) {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        }
     
-        // Gestione del drag and drop
         dropZone.addEventListener('dragover', (e) => {
             e.preventDefault();
             dropZone.classList.add('uploading');
@@ -258,19 +297,39 @@
             outputDiv.textContent = "Trascrizione in corso...";
             dropZone.classList.add('uploading');
             
-            const formData = new FormData();
-            formData.append('file', file);
-    
             try {
+                // Converti l'audio usando Web Audio API
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+                const arrayBuffer = await file.arrayBuffer();
+                const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                
+                // Crea un buffer mono a 16kHz
+                const offlineContext = new OfflineAudioContext(1, audioBuffer.duration * 16000, 16000);
+                const source = offlineContext.createBufferSource();
+                source.buffer = audioBuffer;
+                source.connect(offlineContext.destination);
+                source.start();
+                
+                // Renderizza il nuovo audio
+                const renderedBuffer = await offlineContext.startRendering();
+                
+                // Converti il buffer in WAV
+                const wav = audioBufferToWav(renderedBuffer);
+                const wavBlob = new Blob([wav], { type: 'audio/wav' });
+                
+                // Invia il file convertito
+                const formData = new FormData();
+                formData.append('file', wavBlob, 'audio.wav');
+
                 const response = await fetch(API_URL, {
                     method: 'POST',
                     body: formData,
                 });
-    
+
                 if (!response.ok) {
                     throw new Error('Errore durante la trascrizione.');
                 }
-    
+
                 const data = await response.json();
                 outputDiv.textContent = data.transcription;
             } catch (error) {
