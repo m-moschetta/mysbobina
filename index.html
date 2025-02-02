@@ -1,343 +1,68 @@
-<!DOCTYPE html>
-<html lang="it" data-critters-container>
-<head>
-    <meta charset="utf-8">
-    <title>MySbobina - Trascrizione Audio</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <style>
-        @charset "UTF-8";
-        @font-face {
-            font-family: Raleway;
-            font-style: normal;
-            font-weight: 100 900;
-            font-display: swap;
-            src: url(https://fonts.gstatic.com/s/raleway/v34/1Ptug8zYS_SKggPNyCAIT5lu.woff2) format("woff2");
-        }
-
-        :root {
-            --primary-color: #9e4fb0;
-            --secondary-color: #fdf3ff;
-            --background-gradient: linear-gradient(135deg, #9e4fb0, #6610f2);
-            --button-hover: #7e3f8d;
-            --text-color: #ffffff;
-            --input-bg: #f8f9fa;
-            --input-border: #ced4da;
-            --box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            --border-radius: 10px;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Raleway', sans-serif;
-        }
-
-        body {
-            background: var(--background-gradient);
-            color: var(--text-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-        }
-
-        main {
-            background: var(--secondary-color);
-            padding: 2.5rem;
-            width: 90%;
-            max-width: 600px;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            text-align: center;
-        }
-
-        header {
-            margin-bottom: 2.5rem;
-        }
-
-        header h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            letter-spacing: 1px;
-            color: var(--primary-color);
-            margin-bottom: 0.5rem;
-        }
-
-        .upload-container {
-            background: var(--input-bg);
-            border: 2px dashed var(--primary-color);
-            border-radius: var(--border-radius);
-            padding: 2rem;
-            margin: 1.5rem 0;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .upload-container:hover {
-            background: #fff;
-            border-color: var(--button-hover);
-        }
-
-        .upload-icon {
-            font-size: 3rem;
-            color: var(--primary-color);
-            margin-bottom: 1rem;
-        }
-
-        .upload-text {
-            color: #666;
-            margin-bottom: 1rem;
-            font-size: 1.1rem;
-        }
-
-        .file-info {
-            color: #888;
-            font-size: 0.9rem;
-        }
-
-        input[type="file"] {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            cursor: pointer;
-        }
-
-        button {
-            background-color: var(--primary-color);
-            color: var(--text-color);
-            border: none;
-            padding: 1rem 2rem;
-            font-size: 1.1rem;
-            border-radius: var(--border-radius);
-            cursor: pointer;
-            transition: all 0.3s ease-in-out;
-            box-shadow: var(--box-shadow);
-            margin: 1rem 0;
-            width: 80%;
-            max-width: 300px;
-        }
-
-        button:hover {
-            background-color: var(--button-hover);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
-        }
-
-        button:active {
-            transform: translateY(0);
-        }
-
-        .output {
-            margin-top: 2rem;
-            padding: 1.5rem;
-            background: var(--input-bg);
-            border-radius: var(--border-radius);
-            color: #333;
-            text-align: left;
-            font-family: monospace;
-            white-space: pre-wrap;
-            min-height: 120px;
-            box-shadow: var(--box-shadow);
-        }
-
-        footer {
-            margin-top: 2rem;
-            text-align: center;
-            font-size: 0.9rem;
-            color: #666;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-            100% { transform: scale(1); }
-        }
-
-        .uploading {
-            animation: pulse 1.5s infinite;
-        }
-
-        @media (max-width: 480px) {
-            main {
-                padding: 1.5rem;
-            }
-
-            header h1 {
-                font-size: 2rem;
-            }
-
-            .upload-container {
-                padding: 1.5rem;
-            }
-
-            button {
-                width: 100%;
-            }
-        }
-    </style>
-</head>
-<body>
-    <main>
-        <header>
-            <h1>Trascrivi il tuo Audio</h1>
-        </header>
-
-        <div class="upload-container" id="dropZone">
-            <div class="upload-icon">📁</div>
-            <div class="upload-text">Trascina qui il tuo file audio<br>oppure clicca per selezionarlo</div>
-            <div class="file-info">Formati supportati: MP3, WAV, M4A, AAC</div>
-            <input type="file" id="audioFile" accept="audio/*">
-        </div>
-
-        <button onclick="transcribeAudio()">Trascrivi Audio</button>
-
-        <div class="output" id="transcriptionOutput">
-            Qui apparirà la trascrizione del tuo audio...
-        </div>
-
-        <footer>
-            <p>Powered by MySbobina</p>
-        </footer>
-    </main>
-
-    <script>
-const API_BASE_URL = "https://73a5-93-66-99-217.ngrok-free.app";
-        const dropZone = document.getElementById('dropZone');
-        const fileInput = document.getElementById('audioFile');
-        const outputDiv = document.getElementById('transcriptionOutput');
-
-        // Funzione per convertire AudioBuffer in WAV
-        function audioBufferToWav(buffer) {
-            const numChannels = 1;
-            const sampleRate = buffer.sampleRate;
-            const format = 1; // PCM
-            const bitDepth = 16;
-            
-            const dataLength = buffer.length * numChannels * (bitDepth / 8);
-            const bufferWav = new ArrayBuffer(44 + dataLength);
-            const view = new DataView(bufferWav);
-            
-            // Scrivi header WAV
-            writeString(view, 0, 'RIFF');
-            view.setUint32(4, 36 + dataLength, true);
-            writeString(view, 8, 'WAVE');
-            writeString(view, 12, 'fmt ');
-            view.setUint32(16, 16, true);
-            view.setUint16(20, format, true);
-            view.setUint16(22, numChannels, true);
-            view.setUint32(24, sampleRate, true);
-            view.setUint32(28, sampleRate * numChannels * (bitDepth / 8), true);
-            view.setUint16(32, numChannels * (bitDepth / 8), true);
-            view.setUint16(34, bitDepth, true);
-            writeString(view, 36, 'data');
-            view.setUint32(40, dataLength, true);
-            
-            // Scrivi i dati audio
-            const samples = buffer.getChannelData(0);
-            let offset = 44;
-            for (let i = 0; i < samples.length; i++) {
-                const sample = Math.max(-1, Math.min(1, samples[i]));
-                view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
-                offset += 2;
-            }
-            
-            return bufferWav;
-        }
-
-        function writeString(view, offset, string) {
-            for (let i = 0; i < string.length; i++) {
-                view.setUint8(offset + i, string.charCodeAt(i));
-            }
-        }
+<script>
+    const API_BASE_URL = "https://73a5-93-66-99-217.ngrok-free.app";
     
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('uploading');
-        });
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('audioFile');
+    const outputDiv = document.getElementById('transcriptionOutput');
     
-        dropZone.addEventListener('dragleave', () => {
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('uploading');
+    });
+    
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('uploading');
+    });
+    
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('uploading');
+        const files = e.dataTransfer.files;
+        if (files.length) {
+            fileInput.files = files;
+            updateFileName(files[0].name);
+        }
+    });
+    
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length) {
+            updateFileName(e.target.files[0].name);
+        }
+    });
+    
+    function updateFileName(fileName) {
+        document.querySelector('.upload-text').textContent = `File selezionato: ${fileName}`;
+    }
+    
+    async function transcribeAudio() {
+        if (!fileInput.files.length) {
+            outputDiv.textContent = "Per favore, seleziona un file audio.";
+            return;
+        }
+        
+        const file = fileInput.files[0];
+        outputDiv.textContent = "Trascrizione in corso...";
+        dropZone.classList.add('uploading');
+        
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+    
+            const response = await fetch(`${API_BASE_URL}/upload/`, {
+                method: 'POST',
+                body: formData,
+            });
+    
+            if (!response.ok) {
+                throw new Error('Errore durante la trascrizione.');
+            }
+    
+            const data = await response.json();
+            outputDiv.textContent = data.transcription;
+        } catch (error) {
+            outputDiv.textContent = `Errore: ${error.message}`;
+        } finally {
             dropZone.classList.remove('uploading');
-        });
-    
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('uploading');
-            const files = e.dataTransfer.files;
-            if (files.length) {
-                fileInput.files = files;
-                updateFileName(files[0].name);
-            }
-        });
-    
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length) {
-                updateFileName(e.target.files[0].name);
-            }
-        });
-    
-        function updateFileName(fileName) {
-            document.querySelector('.upload-text').textContent = `File selezionato: ${fileName}`;
         }
-    
-        async function transcribeAudio() {
-            if (!fileInput.files.length) {
-                outputDiv.textContent = "Per favore, seleziona un file audio.";
-                return;
-            }
-            
-            const file = fileInput.files[0];
-            outputDiv.textContent = "Trascrizione in corso...";
-            dropZone.classList.add('uploading');
-            
-            try {
-                // Converti l'audio usando Web Audio API
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
-                const arrayBuffer = await file.arrayBuffer();
-                const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-                
-                // Crea un buffer mono a 16kHz
-                const offlineContext = new OfflineAudioContext(1, audioBuffer.duration * 16000, 16000);
-                const source = offlineContext.createBufferSource();
-                source.buffer = audioBuffer;
-                source.connect(offlineContext.destination);
-                source.start();
-                
-                // Renderizza il nuovo audio
-                const renderedBuffer = await offlineContext.startRendering();
-                
-                // Converti il buffer in WAV
-                const wav = audioBufferToWav(renderedBuffer);
-                const wavBlob = new Blob([wav], { type: 'audio/wav' });
-                
-                // Invia il file convertito
-                const formData = new FormData();
-                formData.append('file', wavBlob, 'audio.wav');
-
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    body: formData,
-                });
-
-                if (!response.ok) {
-                    throw new Error('Errore durante la trascrizione.');
-                }
-
-                const data = await response.json();
-                outputDiv.textContent = data.transcription;
-            } catch (error) {
-                outputDiv.textContent = `Errore: ${error.message}`;
-            } finally {
-                dropZone.classList.remove('uploading');
-            }
-        }
+    }
     </script>
-</body>
-</html>
