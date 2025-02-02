@@ -5,7 +5,7 @@ import os
 import subprocess
 import shutil
 
-app = FastAPI()
+app = FastAPI(redirect_slashes=False)
 
 # Configura il middleware CORS
 app.add_middleware(
