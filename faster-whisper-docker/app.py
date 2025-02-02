@@ -18,9 +18,10 @@ app.add_middleware(
 )
 
 # Percorsi per whisper.cpp
-WHISPER_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "whisper.cpp")
-MODEL_PATH = os.path.join(WHISPER_DIR, "models", "ggml-base.bin")
+WHISPER_DIR = "/Users/mariomoschetta/Library/Mobile Documents/com~apple~CloudDocs/Mysbobina/whisper.cpp"
+MODEL_PATH = os.path.join(WHISPER_DIR, "models", "ggml-large-v3-turbo-q8_0.bin")
 WHISPER_BIN = os.path.join(WHISPER_DIR, "main")
+
 
 @app.get("/")
 def read_root():
